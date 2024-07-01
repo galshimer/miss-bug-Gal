@@ -5,10 +5,7 @@ import { bugService } from './services/bug.service.js'
 import { loggerService } from './services/logger.service.js'
 
 const app = express()
-app.get('/', (req, res) => {
-    res.send('Hello There!')
-})
-
+app.use(express.static('public'))
 
 app.get('/api/bug', (req, res) => {
     const filterBy = {
