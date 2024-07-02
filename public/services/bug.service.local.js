@@ -13,7 +13,6 @@ export const bugService = {
     remove,
 }
 
-
 function query() {
     return storageService.query(STORAGE_KEY)
 }
@@ -32,9 +31,6 @@ function save(bug) {
         return storageService.post(STORAGE_KEY, bug)
     }
 }
-
-
-
 
 function _createBugs() {
     let bugs = utilService.loadFromStorage(STORAGE_KEY)

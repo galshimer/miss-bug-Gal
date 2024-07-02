@@ -6,6 +6,7 @@ import { loggerService } from './services/logger.service.js'
 
 const app = express()
 app.use(express.static('public'))
+app.use(cookieParser())
 
 app.get('/api/bug', (req, res) => {
     const filterBy = {
@@ -38,19 +39,30 @@ app.get('/api/bug/save', (req, res) => {
 })
 
 app.get('/api/bug/:bugId', (req, res) => {
-    console.log('req.params:', req.params)
     const { bugId } = req.params
-    console.log('bugId:', bugId)
+
+    const { visitedBugs = [] } = req.cookies
+    console.log('visitedBugs:', visitedBugs)
+
+    if (!visitedBugs.includes(bugId)) {
+        if (visitedBugs.length >= 3) return res.status(401).send('Wait for a bit')
+        else visitedBugs.push(bugId)
+    }
+
+    res.cookie('visitedBugs', visitedBugs, { maxAge: 1000 * 70 })
+
+    console.log('visitedBugs:', visitedBugs)
+
     bugService.getById(bugId)
         .then(bug => res.send(bug))
-        .catch((err) => {
+        .catch(err => {
             loggerService.error('Cannot get bug', err)
-            res.status(500).send('Cannot get bug')
+            res.status(400).send('Cannot get bug')
+            // res.status(403).send(err)
         })
 })
 
 app.get('/api/bug/:bugId/remove', (req, res) => {
-    // console.log('req.params:', req.params)
     const { bugId } = req.params
     bugService.remove(bugId)
         .then(() => res.send(`Bug (${bugId}) removed!`))

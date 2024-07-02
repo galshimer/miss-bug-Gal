@@ -1,3 +1,4 @@
+import { log } from "console"
 import { utilService } from "./util.service.js"
 import fs from 'fs'
 
@@ -39,6 +40,7 @@ function remove(bugId) {
 }
 
 function save(bugToSave) {
+    console.log(bugToSave);
     if (bugToSave._id) {
         const bugIdx = bugs.findIndex(bug => bug._id === bugToSave._id)
         bugs[bugIdx] = bugToSave
