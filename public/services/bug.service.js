@@ -5,70 +5,59 @@ import { utilService } from './util.service.js'
 const STORAGE_KEY = 'bugDB'
 const BASE_URL = '/api/bug/'
 
-_createBugs()
+// _createBugs()
 
 export const bugService = {
     query,
-    getById,
+    get,
     save,
     remove,
+    getDefaultFilter
 }
 
-
-function query(filterBy = {}) {
-    return axios.get(BASE_URL, { params: filterBy })
+function query(filterBy = {}, sortBy = {}) {
+    return axios.get(BASE_URL, { params: { ...filterBy, ...sortBy } })
         .then(res => res.data)
 }
 
-function getById(bugId) {
+function get(bugId) {
     return axios.get(BASE_URL + bugId)
         .then(res => res.data)
+        .then(bug => _setNextPrevBugId(bug))        
 }
 
 function remove(bugId) {
-    return axios.get(BASE_URL + bugId + '/remove')
+    return axios.delete(BASE_URL + bugId)
         .then(res => res.data)
 }
 
 function save(bug) {
-    const url = BASE_URL + 'save'
-    let queryParams = `?title=${bug.title}&severity=${bug.severity}&description=${bug.description}`
-    if (bug._id) queryParams += `&_id=${bug._id}`
-    return axios.get(url + queryParams).then(res => res.data)
-}
-
-function _createBugs() {
-    let bugs = utilService.loadFromStorage(STORAGE_KEY)
-    if (!bugs || !bugs.length) {
-        bugs = [
-            {
-                title: "Infinite Loop Detected",
-                severity: 4,
-                description: "problem when clicking Save",
-                _id: "1NF1N1T3"
-            },
-            {
-                title: "Keyboard Not Found",
-                severity: 3,
-                description: "problem when clicking Save",
-                _id: "K3YB0RD"
-            },
-            {
-                title: "404 Coffee Not Found",
-                severity: 2,
-                description: "problem when clicking Save",
-                _id: "C0FF33"
-            },
-            {
-                title: "Unexpected Response",
-                severity: 1,
-                description: "problem when clicking Save",
-                _id: "G0053"
-            }
-        ]
-        utilService.saveToStorage(STORAGE_KEY, bugs)
+    if (bug._id) {
+        return axios.put(BASE_URL, bug).then(res => res.data)
+    } else {
+        return axios.post(BASE_URL, bug).then(res => res.data)
     }
-
-
-
 }
+
+function getDefaultFilter() {
+    return {
+        title: '',
+        severity: '',
+        description: '',
+        sortBy: 'createdAt',
+        sortDir: '1',
+        pageIdx: 0
+    }
+}
+
+function _setNextPrevBugId(bug) {
+    return query().then((bugs) => {
+        const bugsIdx = bugs.findIndex((currBug) => currBug._id === bug._id)
+        const nextBug = bugs[bugsIdx + 1] ? bugs[bugsIdx + 1] : bugs[0]
+        const prevBug = bugs[bugsIdx - 1] ? bugs[bugsIdx - 1] : bugs[bugs.length - 1]
+        bugs.nextBugId = nextBug._id
+        bugs.prevBugId = prevBug._id
+        return bugs
+    })
+}
+

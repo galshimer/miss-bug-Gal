@@ -11,16 +11,29 @@ export const bugService = {
     remove,
     save
 }
+const PAGE_SIZE = 3
 
 function query(filterBy = {}) {
     return Promise.resolve(bugs)
         .then(bugs => {
             if (filterBy.txt) {
                 const regExp = new RegExp(filterBy.txt, 'i')
-                bugs = bugs.filter(bug => regExp.test(bugs.title))
+                bugs = bugs.filter(bug => regExp.test(bug.title))
             }
             if (filterBy.severity) {
                 bugs = bugs.filter(bug => bug.severity >= filterBy.severity)
+            }
+            if (filterBy.sortBy) {
+                const sortDir = filterBy.sortDir === '-1' ? -1 : 1
+                bugs.sort((a, b) => {
+                    if (a[filterBy.sortBy] > b[filterBy.sortBy]) return sortDir
+                    if (a[filterBy.sortBy] < b[filterBy.sortBy]) return -sortDir
+                    return 0
+                })
+            }
+            if (filterBy.pageIdx !== undefined) {
+                const startIdx = filterBy.pageIdx * PAGE_SIZE 
+                bugs = bugs.slice(startIdx, startIdx + PAGE_SIZE)
             }
             return bugs
         })
@@ -40,7 +53,6 @@ function remove(bugId) {
 }
 
 function save(bugToSave) {
-    console.log(bugToSave);
     if (bugToSave._id) {
         const bugIdx = bugs.findIndex(bug => bug._id === bugToSave._id)
         bugs[bugIdx] = bugToSave

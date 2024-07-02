@@ -1,18 +1,26 @@
 import { bugService } from '../services/bug.service.js'
 import { showSuccessMsg, showErrorMsg } from '../services/event-bus.service.js'
 import { BugList } from '../cmps/BugList.jsx'
+import { BugFilter } from '../cmps/BugFilter.jsx'
 
 const { useState, useEffect } = React
+const { Link } = ReactRouterDOM
 
 export function BugIndex() {
     const [bugs, setBugs] = useState(null)
+    const [filterBy, setFilterBy] = useState(bugService.getDefaultFilter())
 
     useEffect(() => {
         loadBugs()
-    }, [])
+    }, [filterBy])
 
     function loadBugs() {
-        bugService.query().then(setBugs)
+        bugService.query(filterBy)
+            .then(setBugs)
+            .catch((err) => {
+                console.log('Had issued in Bug Index:', err)
+                showErrorMsg('Cannot get bugs')
+            })
     }
 
     function onRemoveBug(bugId) {
@@ -36,8 +44,7 @@ export function BugIndex() {
             severity: +prompt('Bug severity?'),
             description: prompt('Bug description?'),
         }
-        bugService
-            .save(bug)
+        bugService.save(bug)
             .then((savedBug) => {
                 console.log('Added Bug', savedBug)
                 setBugs([...bugs, savedBug])
@@ -52,8 +59,7 @@ export function BugIndex() {
     function onEditBug(bug) {
         const severity = +prompt('New severity?')
         const bugToSave = { ...bug, severity }
-        bugService
-            .save(bugToSave)
+        bugService.save(bugToSave)
             .then((savedBug) => {
                 console.log('Updated Bug:', savedBug)
                 const bugsToUpdate = bugs.map((currBug) =>
@@ -68,6 +74,19 @@ export function BugIndex() {
             })
     }
 
+    function onSetFilter(filterBy) {
+        setFilterBy((prevFilterBy) => ({ ...prevFilterBy, ...filterBy }))
+    }
+
+    function onChangePage(diff) {
+        if (filterBy.pageIdx === undefined) return
+        setFilterBy(prevFilter => {
+            let nextPageIdx = prevFilter.pageIdx + diff
+            if (nextPageIdx < 0) nextPageIdx = 0
+            return { ...prevFilter, pageIdx: nextPageIdx }
+        })
+    }
+
     return (
         <main>
             <section className='info-actions'>
@@ -75,7 +94,12 @@ export function BugIndex() {
                 <button onClick={onAddBug}>Add Bug ⛐</button>
             </section>
             <main>
-                <BugList bugs={bugs} onRemoveBug={onRemoveBug} onEditBug={onEditBug} />
+                <BugFilter filterBy={filterBy} onSetFilter={onSetFilter} />
+                <BugList bugs={bugs} 
+                onRemoveBug={onRemoveBug} 
+                onEditBug={onEditBug}/>
+                <button onClick={() => onChangePage(-1)}>Previous</button>
+                <button onClick={() => onChangePage(1)}>Next</button>
             </main>
         </main>
     )
