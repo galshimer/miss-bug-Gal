@@ -13,7 +13,7 @@ export const bugService = {
 }
 const PAGE_SIZE = 3
 
-function query(filterBy = {}) {
+function query(filterBy = { txt: '' }) {
     return Promise.resolve(bugs)
         .then(bugs => {
             if (filterBy.txt) {
@@ -32,7 +32,7 @@ function query(filterBy = {}) {
                 })
             }
             if (filterBy.pageIdx !== undefined) {
-                const startIdx = filterBy.pageIdx * PAGE_SIZE 
+                const startIdx = filterBy.pageIdx * PAGE_SIZE
                 bugs = bugs.slice(startIdx, startIdx + PAGE_SIZE)
             }
             return bugs
@@ -45,19 +45,32 @@ function getById(bugId) {
     return Promise.resolve(bug)
 }
 
-function remove(bugId) {
+function remove(bugId, loggedinUser) {
     const bugIdx = bugs.findIndex(bug => bug._id === bugId)
     if (bugIdx < 0) return Promise.reject('Cannot find bug - ' + bugId)
+
+    const bug = bug[bugIdx]
+    if (!loggedinUser.isAdmin &&
+        bug.owner._id !== loggedinUser._id) {
+        return Promise.reject('Not your bug')
+    }
     bugs.splice(bugIdx, 1)
     return _saveBugsToFile().then(() => `bug (${bugId}) removed!`)
 }
 
-function save(bugToSave) {
+function save(bugToSave, loggedinUser) {
     if (bugToSave._id) {
-        const bugIdx = bugs.findIndex(bug => bug._id === bugToSave._id)
-        bugs[bugIdx] = bugToSave
+        const bugToUpdate = bugs.find(bug => bug._id === bugToSave._id)
+        if (!loggedinUser.isAdmin &&
+            bugToUpdate.owner._id !== loggedinUser._id) {
+            return Promise.reject('Not your bug')
+        }
+       bugToUpdate.title = bugToSave.title
+       bugToUpdate.description = bugToSave.description
+       bugToUpdate.severity = bugToSave.severity
     } else {
         bugToSave._id = utilService.makeId()
+        bugToSave.owner = loggedinUser
         bugs.unshift(bugToSave)
     }
 
@@ -69,6 +82,7 @@ function _saveBugsToFile() {
         const data = JSON.stringify(bugs, null, 4)
         fs.writeFile('data/bug.json', data, (err) => {
             if (err) {
+                loggerService.error('Cannot write to cars file', err)
                 return reject(err)
             }
             resolve()
