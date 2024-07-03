@@ -3,24 +3,40 @@
         "title": "d",
         "description": "fvfbv vmnf nvn",
         "severity": 3,
-        "_id": "quzIk"
+        "_id": "quzIk",
+        "creator": {
+            "_id": "u101",
+            "fullName": "Gal Shimer"
+        }
     },
     {
         "title": "c",
         "description": "dvgf nbdbjhdf fbf ",
         "severity": 2,
-        "_id": "CED66"
+        "_id": "CED66",
+        "creator": {
+            "_id": "u101",
+            "fullName": "Gal Shimer"
+        }
     },
     {
         "title": "b",
         "description": "dfkbvkfdf v",
         "severity": 1,
-        "_id": "XrmUm"
+        "_id": "XrmUm",
+        "creator": {
+            "_id": "u101",
+            "fullName": "Gal Shimer"
+        }
     },
     {
         "title": "a",
         "description": "dvd",
         "severity": 0,
-        "_id": "73fiI"
+        "_id": "73fiI",
+        "creator": {
+            "_id": "u101",
+            "fullName": "Gal Shimer"
+        }
     }
 ]
